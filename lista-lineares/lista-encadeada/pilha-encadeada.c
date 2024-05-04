@@ -42,6 +42,15 @@ void print_stack(stack* s) {
   puts("");
 }
 
+void free_stack(stack* s) {
+  while(s->topo != NULL) {
+    node* tmp = s->topo;
+    s->topo = s->topo->next;
+    free(tmp);
+  }
+  free(s);
+}
+
 int main(int argc, char *argv[])
 {
   stack* s = (stack*)malloc(sizeof(stack));
@@ -56,6 +65,8 @@ int main(int argc, char *argv[])
   pop_stack(s, &r);
   print_stack(s);
   printf("Valor removido: %d\n", r);
+
+  free_stack(s);
 
   return EXIT_SUCCESS;
 }
