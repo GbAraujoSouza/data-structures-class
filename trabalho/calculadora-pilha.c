@@ -88,6 +88,7 @@ int doMath(int n1, int n2, char op)
     return n1 * n2;
   case '/':
     return n1 / n2;
+  default: return 0;
   }
 }
 
