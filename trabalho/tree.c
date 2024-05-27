@@ -11,14 +11,15 @@ typedef struct BinaryTree {
   node root;
 } BinaryTree;
 
-void inOrderPrint(node* root) {
+void preOrderPrint(node* root) {
   // node* pt = root;
+  if (!root) return;
   printf("%d ", root->val);
   if (root->left != NULL) {
-    inOrderPrint(root->left);
+    preOrderPrint(root->left);
   }
   if (root->right != NULL) {
-    inOrderPrint(root->right);
+    preOrderPrint(root->right);
   }
 }
 
@@ -40,97 +41,71 @@ void insere(node** root, int val) {
   }
 }
 
-node* busca(node* root, int val) {
-  if (root) {
-    if (root->val > val)
-      return busca(root->left, val);
-    else if (root->val < val)
-      return busca(root->right, val);
-    else
-      return root;
-  }
-  return NULL;
-}
-
-int busca_nivel(node** root, int x, int nivel) {
-  if (*root == NULL)
-    return nivel;
-  if ((*root)->val == x)
-    return nivel;
-  if ((*root)->val < x){
-    return busca_nivel(&((*root)->right), x, nivel + 1);
-  }
-  else {
-    return busca_nivel(&((*root)->left), x, nivel+1);
-  }
-}
-
-void remove_tree(node** root, int val) {
+node* removeTree(node** root, int val) {
   node* x = *root;
   if (!x) {
-    *root = NULL;
-    return;
-  }
-  node* parent = NULL;
-  while(x) {
-    if (val < x->val) {
-      parent = x; 
-      x = x->left;
-    } else if (val > x->val) {
-      parent = x; 
-      x = x->right;
-    } else {
-      break;
-    }
+    return x;
   }
 
-  if (!x) return; // valor a ser removido nao encontrado
-  // no folha
-  if (!x->right && !x->left) {
-    if (parent->right == x)
-      parent->right = NULL;
-    else
-      parent->left = NULL;
-    free(x);
-  }
-  // no com apenas um filho
-  else if (!x->right || !x->left) {
-    if (!x->left) {
-      if (parent->right == x)
-        parent->right = x->right;
-      else
-        parent->left = x->right;
+  if (val == x->val) {
+    // encontramos o no a ser removido
+    if (!x->right && !x->left) {
+      // no folha
+      free(x);
+      return NULL;
+    }
+    else if(!x->right || !x->left) {
+      // no com 1 filho
+      node* aux;
+      if (x->right) 
+        aux = x->right;
+      else {
+        aux = x->left;
+      }
+      free(x);
+      return aux;
     }
     else {
-      if (parent->right == x)
-        parent->right = x->left;
-      else
-        parent->left = x->left;
+      // no com dois filhos
+      node* minNode = x->right;
+      while(minNode->left) {
+        minNode = minNode->left;
+      }
+      x->val = minNode->val;
+      minNode->val = val;
+      x->right = removeTree(&x->right, val);
     }
   }
+  else if (val < x->val) {
+    x->left = removeTree(&x->left, val);
+  }
+  else {
+    x->right = removeTree(&x->right, val);
+  }
+
+  return x;
 
 }
 
 int main(int argc, char *argv[])
 {
   node* root = NULL;
-  // int i = 0;
-  // while(i < 10) {
-  //   insere(&root, i+1);
-  //   i++;
-  // }
-  insere(&root, 2);
-  insere(&root, 1);
-  insere(&root, 3);
-  insere(&root, 0);
-  
-  inOrderPrint(root);
-  puts("");
+  char input[10];
+  while(!feof(stdin)) {
+    fgets(input, 10, stdin);
+    switch (input[0]) {
+      case 'i':
+        insere(&root, atoi(&input[2]));
+        break;
+      case 'p':
+        preOrderPrint(root);
+        puts("");
+        break;
+      case 'r':
+        removeTree(&root, atoi(&input[2]));
+        break;
+    }
+  }
 
-  remove_tree(&root, 1);
-
-  inOrderPrint(root);
-  puts("");
-
-  return EXIT_SUCCESS;
+  return 0;
 }
