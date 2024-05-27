@@ -90,9 +90,8 @@ node* removeTree(node** root, int val) {
 int main(int argc, char *argv[])
 {
   node* root = NULL;
-  char input[10];
-  while(!feof(stdin)) {
-    fgets(input, 10, stdin);
+  char input[100];
+  while(fgets(input, 100, stdin)) {
     switch (input[0]) {
       case 'i':
         insere(&root, atoi(&input[2]));
