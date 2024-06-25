@@ -194,6 +194,7 @@ void consertaFelix(treeNode** root, treeNode* node, stack* lineage) {
       }
     }
   }
+  (*root)->color = 'b';
 }
 
 int main() {

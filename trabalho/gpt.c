@@ -9,195 +9,225 @@ typedef struct n {
     struct n* right;
 } treeNode;
 
-// Stack node
-typedef struct aux {
-    treeNode* node;
-    struct aux *next;
-} stackNode;
-
-// Stack
-typedef struct stack {
-    stackNode *topo;
-} stack;
-
-void preOrderPrint(treeNode* root);
-void insereStack(stack *s, treeNode* node);
-void popStack(stack *s, treeNode** node);
-void insereRBTree(treeNode** root, int val);
-void recolor(treeNode* n);
-void consertaFelix(treeNode** root, treeNode* node, stack* lineage);
-void freeStack(stack* s);
-treeNode* rotateLeft(treeNode* root, treeNode* node);
-treeNode* rotateRight(treeNode* root, treeNode* node);
-
 void preOrderPrint(treeNode* root) {
     if (!root) return;
-    printf("%d%c ", root->val, root->color);
     preOrderPrint(root->left);
+    printf("%d%c ", root->val, root->color);
     preOrderPrint(root->right);
 }
-
-void insereStack(stack *s, treeNode* node) {
-    stackNode *new = (stackNode *)malloc(sizeof(stackNode));
-    new->node = node;
-    new->next = s->topo;
-    s->topo = new;
-}
-
-void popStack(stack *s, treeNode** node) {
-    if (s->topo != NULL) {
-        *node = s->topo->node;
-        stackNode *tmp = s->topo;
-        s->topo = s->topo->next;
-        free(tmp);
-    }
-}
-
-void freeStack(stack* s) {
-    treeNode* tmp;
-    while (s->topo != NULL) {
-        popStack(s, &tmp);
-    }
-    free(s);
-}
-
-void insereRBTree(treeNode** root, int val) {
-    if (*root == NULL) {
-        treeNode* new = (treeNode*)malloc(sizeof(treeNode));
-        new->val = val;
-        new->color = 'b'; // Root is always black
-        *root = new;
-        new->left = NULL;
-        new->right = NULL;
-    } else {
-        treeNode* x = *root;
-        treeNode* parent = NULL;
-        stack* lineage = (stack*)malloc(sizeof(stack));
-        lineage->topo = NULL;
-        while (x) {
-            insereStack(lineage, x);
-            parent = x;
-            if (x->val > val) {
-                x = x->left;
-            } else {
-                x = x->right;
-            }
-        }
-        treeNode* new = (treeNode*)malloc(sizeof(treeNode));
-        new->val = val;
-        new->color = 'r';
-        new->left = NULL;
-        new->right = NULL;
-        if (parent->val > val) {
-            parent->left = new;
-        } else {
-            parent->right = new;
-        }
-        insereStack(lineage, new);
-        consertaFelix(root, new, lineage);
-        freeStack(lineage);
-    }
-}
-
-void recolor(treeNode* n) {
-    n->color = (n->color == 'r') ? 'b' : 'r';
-}
-
-treeNode* rotateLeft(treeNode* root, treeNode* node) {
-    treeNode* rightChild = node->right;
-    node->right = rightChild->left;
-    rightChild->left = node;
-    rightChild->color = node->color;
-    node->color = 'r';
-    if (node == root) {
-        root = rightChild;
-    }
+treeNode* rotateLeft(treeNode *root) {
+    treeNode *rightChild = root->right;
+    root->right = rightChild->left;
+    rightChild->left = root;
     return rightChild;
 }
-
-treeNode* rotateRight(treeNode* root, treeNode* node) {
-    treeNode* leftChild = node->left;
-    node->left = leftChild->right;
-    leftChild->right = node;
-    leftChild->color = node->color;
-    node->color = 'r';
-    if (node == root) {
-        root = leftChild;
-    }
+treeNode* rotateRight(treeNode *root) {
+    treeNode *leftChild = root->left;
+    root->left = leftChild->right;
+    leftChild->right = root;
     return leftChild;
 }
 
-void consertaFelix(treeNode** root, treeNode* node, stack* lineage) {
-    treeNode* parent = NULL;
-    treeNode* grandParent = NULL;
-    treeNode* uncle = NULL;
-
-    while (lineage->topo != NULL && lineage->topo->node->color == 'r') {
-        popStack(lineage, &parent);
-        popStack(lineage, &grandParent);
-
-        if (parent == grandParent->left) {
-            uncle = grandParent->right;
-
-            if (uncle != NULL && uncle->color == 'r') { // Case 1: Uncle is red
-                grandParent->color = 'r';
-                parent->color = 'b';
-                uncle->color = 'b';
-                node = grandParent;
-            } else { // Uncle is black or null
-                if (node == parent->right) { // Case 2: Node is right child
-                    parent = rotateLeft(*root, parent);
-                    node = parent->left;
-                }
-                // Case 3: Node is left child
-                grandParent->left = rotateRight(*root, grandParent);
-                recolor(grandParent);
-                recolor(grandParent->left);
-                if (lineage->topo == NULL) {
-                    *root = grandParent->left;
-                }
-            }
-        } else { // Symmetric cases
-            uncle = grandParent->left;
-
-            if (uncle != NULL && uncle->color == 'r') { // Case 1: Uncle is red
-                grandParent->color = 'r';
-                parent->color = 'b';
-                uncle->color = 'b';
-                node = grandParent;
-            } else { // Uncle is black or null
-                if (node == parent->left) { // Case 2: Node is left child
-                    parent = rotateRight(*root, parent);
-                    node = parent->right;
-                }
-                // Case 3: Node is right child
-                grandParent->right = rotateLeft(*root, grandParent);
-                recolor(grandParent);
-                recolor(grandParent->right);
-                if (lineage->topo == NULL) {
-                    *root = grandParent->right;
-                }
-            }
-        }
+treeNode* fixViolations(treeNode *root) {
+  if (root->left && root->left->color == 'r') {
+    if (root->left->left && root->left->left->color == 'r') {
+      // Right rotate needed
+      root = rotateRight(root);
+      root->color = 'b';
+      root->right->color = 'r';
+    } else if (root->left->right && root->left->right->color == 'r') {
+      // Left-right rotate needed
+      root->left = rotateLeft(root->left);
+      root = rotateRight(root);
+      root->color = 'b';
+      root->right->color = 'r';
     }
-    (*root)->color = 'b';
+  } else if (root->right && root->right->color == 'r') {
+    if (root->right->right && root->right->right->color == 'r') {
+      // Left rotate needed
+      root = rotateLeft(root);
+      root->color = 'b';
+      root->left->color = 'r';
+    } else if (root->right->left && root->right->left->color == 'r') {
+      // Right-left rotate needed
+      root->right = rotateRight(root->right);
+      root = rotateLeft(root);
+      root->color = 'b';
+      root->left->color = 'r';
+    }
+  }
+  return root;
 }
 
+void insertRBTree(treeNode** rootRef, int val) {
+  if (*rootRef == NULL) {
+    treeNode* new = (treeNode*)malloc(sizeof(treeNode));
+    new->val = val;
+    new->color = 'r';
+    new->left = NULL;
+    new->right = NULL;
+    *rootRef = new;
+    // (*rootRef)->color = 'b'; // root must be black
+    return;
+  }
+
+  treeNode* root = *rootRef;
+
+  if (val < root->val) {
+    insertRBTree(&root->left, val);
+  } else if (val > root->val) {
+    insertRBTree(&root->right, val);
+  }
+
+  if (root->color == 'b') {
+    if ((root->left && root->left->color == 'r') && (root->right && root->right->color == 'r')) {
+      root->left->color = 'b';
+      root->right->color = 'b';
+      root->color = 'r';
+    } else {
+      *rootRef = fixViolations(root);
+    }
+  } else {
+    *rootRef = fixViolations(root);
+  }
+}
+// void insereRBTree(treeNode** root, int val) {
+//   if (*root == NULL) {
+//     treeNode* new = (treeNode*)malloc(sizeof(treeNode));
+//     new->val = val;
+//     new->color = 'b'; // Root is always black
+//     *root = new;
+//     new->left = NULL;
+//     new->right = NULL;
+//   } else {
+//     treeNode* x = *root;
+//     treeNode* parent = NULL;
+//     stack* lineage = (stack*)malloc(sizeof(stack));
+//     lineage->topo = NULL;
+//     while (x) {
+//       insereStack(lineage, x);
+//       parent = x;
+//       if (x->val > val) {
+//         x = x->left;
+//       } else {
+//         x = x->right;
+//       }
+//     }
+//     treeNode* new = (treetreeNode*)malloc(sizeof(treetreeNode));
+//     new->val = val;
+//     new->color = 'r';
+//     new->left = NULL;
+//     new->right = NULL;
+//     if (parent->val > val) {
+//       parent->left = new;
+//     } else {
+//       parent->right = new;
+//     }
+//     insereStack(lineage, new);
+//     consertaFelix(root, new, lineage);
+//     freeStack(lineage);
+//   }
+// }
+//
+// void recolor(treeNode* n) {
+//     n->color = (n->color == 'r') ? 'b' : 'r';
+// }
+//
+// treeNode* rotateLeft(treetreeNode* root, treetreeNode* node) {
+//     treeNode* rightChild = node->right;
+//     node->right = rightChild->left;
+//     rightChild->left = node;
+//     rightChild->color = node->color;
+//     node->color = 'r';
+//     if (node == root) {
+//         root = rightChild;
+//     }
+//     return rightChild;
+// }
+//
+// treeNode* rotateRight(treetreeNode* root, treetreeNode* node) {
+//     treeNode* leftChild = node->left;
+//     node->left = leftChild->right;
+//     leftChild->right = node;
+//     leftChild->color = node->color;
+//     node->color = 'r';
+//     if (node == root) {
+//         root = leftChild;
+//     }
+//     return leftChild;
+// }
+//
+// void consertaFelix(treeNode** root, treetreeNode* node, stack* lineage) {
+//     treeNode* parent = NULL;
+//     treeNode* grandParent = NULL;
+//     treeNode* uncle = NULL;
+//
+//     while (lineage->topo != NULL && lineage->topo->node->color == 'r') {
+//         popStack(lineage, &parent);
+//         popStack(lineage, &grandParent);
+//
+//         if (parent == grandParent->left) {
+//             uncle = grandParent->right;
+//
+//             if (uncle != NULL && uncle->color == 'r') { // Case 1: Uncle is red
+//                 grandParent->color = 'r';
+//                 parent->color = 'b';
+//                 uncle->color = 'b';
+//                 node = grandParent;
+//             } else { // Uncle is black or null
+//                 if (node == parent->right) { // Case 2: treeNode is right child
+//                     parent = rotateLeft(*root, parent);
+//                     node = parent->left;
+//                 }
+//                 // Case 3: treeNode is left child
+//                 grandParent->left = rotateRight(*root, grandParent);
+//                 recolor(grandParent);
+//                 recolor(grandParent->left);
+//                 if (lineage->topo == NULL) {
+//                     *root = grandParent->left;
+//                 }
+//             }
+//         } else { // Symmetric cases
+//             uncle = grandParent->left;
+//
+//             if (uncle != NULL && uncle->color == 'r') { // Case 1: Uncle is red
+//                 grandParent->color = 'r';
+//                 parent->color = 'b';
+//                 uncle->color = 'b';
+//                 node = grandParent;
+//             } else { // Uncle is black or null
+//                 if (node == parent->left) { // Case 2: treeNode is left child
+//                     parent = rotateRight(*root, parent);
+//                     node = parent->right;
+//                 }
+//                 // Case 3: treeNode is right child
+//                 grandParent->right = rotateLeft(*root, grandParent);
+//                 recolor(grandParent);
+//                 recolor(grandParent->right);
+//                 if (lineage->topo == NULL) {
+//                     *root = grandParent->right;
+//                 }
+//             }
+//         }
+//     }
+//     (*root)->color = 'b';
+// }
+//
 int main() {
     treeNode* root = NULL;
-    insereRBTree(&root, 10);
+    insertRBTree(&root, 10);
     preOrderPrint(root);
     puts("");
-    insereRBTree(&root, 2);
+    insertRBTree(&root, 20);
     preOrderPrint(root);
     puts("");
-    insereRBTree(&root, 39);
+    insertRBTree(&root, 30);
     preOrderPrint(root);
     puts("");
-    insereRBTree(&root, 5);
+    insertRBTree(&root, 40);
     preOrderPrint(root);
     puts("");
-    insereRBTree(&root, 1);
+    insertRBTree(&root, 50);
     preOrderPrint(root);
     puts("");
 
